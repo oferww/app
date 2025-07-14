@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flight Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 2rem;
+      color: #333;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .container {
+      max-width: 1200px;
+      background: #fff;
+      padding: 2rem;
+      margin: 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #0066cc;
+    }
+    .search-summary {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #0066cc;
+      text-align: center;
+      font-size: 1.15rem;
+    }
+    .search-summary .flag {
+      vertical-align: middle;
+      margin-right: 0.3em;
+      margin-left: 0.3em;
+      height: 18px;
+      width: 24px;
+      display: inline-block;
+    }
+    .search-summary .search-label {
+      font-weight: 700;
+      color: #0066cc;
+      margin-right: 0.3em;
+    }
+    .search-summary .search-value {
+      font-weight: 600;
+      margin-left: 0.3em;
+    }
+    .search-summary .date-block {
+      margin: 0.5em 0 0.5em 0;
+      font-size: 1.08em;
+    }
+    .route-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .route-arrow {
+      margin: 0 1rem;
+      color: #0066cc;
+      font-size: 1.2rem;
+    }
+    .date-range {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .date-info {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+    .date-info strong {
+      color: #0066cc;
+    }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .results-count {
+      font-size: 1.1rem;
+      color: #555;
+    }
+    .loading-indicator {
+      text-align: center;
+      padding: 2rem;
+      color: #0066cc;
+      font-size: 1.1rem;
+    }
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #0066cc;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 1rem 0;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+      transition: all 0.3s ease;
+    }
+    li:hover {
+      background: #e3f2fd;
+      border-color: #0066cc;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,102,204,0.1);
+    }
+    .flight-option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .flight-main {
+      flex: 1;
+    }
+    .flight-route {
+      margin-bottom: 1rem;
+    }
+    .route-segment {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .airport-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .airport-code {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #0066cc;
+    }
+    .airport-name {
+      font-size: 0.85rem;
+      color: #666;
+      text-align: center;
+    }
+    .flight-arrow {
+      font-size: 1.5rem;
+      margin: 0 0.5rem;
+    }
+    .flight-dates {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .date-segment {
+      flex: 1;
+      text-align: center;
+    }
+    .date-label {
+      font-size: 0.8rem;
+      color: #666;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .date-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.2rem;
+    }
+    .day-name {
+      font-size: 0.85rem;
+      color: #0066cc;
+      font-weight: 500;
+    }
+    .duration-info {
+      text-align: center;
+      padding: 0.5rem;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+    .duration-label {
+      font-size: 0.75rem;
+      color: #666;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .duration-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0066cc;
+    }
+    .flight-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .search-btn {
+      background: #0066cc;
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .search-btn:hover {
+      background: #004f9a;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,102,204,0.3);
+    }
+    .option-number {
+      font-size: 0.8rem;
+      color: #999;
+      font-weight: 500;
+    }
+    
+    /* Flight Data Styles */
+    .flight-data {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e9ecef;
+    }
+    .flight-data h4 {
+      margin: 0 0 1rem 0;
+      color: #0066cc;
+      font-size: 1.1rem;
+    }
+    .flight-categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .flight-category {
+      background: #fff;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .category-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .category-icon {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    .direct-flights .category-icon { color: #28a745; }
+    .one-stop-flights .category-icon { color: #ffc107; }
+    .multi-stop-flights .category-icon { color: #dc3545; }
+    
+    .flight-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .flight-item {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+      font-size: 0.9rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .flight-item:last-child {
+      margin-bottom: 0;
+    }
+    .flight-price {
+      font-weight: 600;
+      color: #0066cc;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .flight-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .flight-info {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+    .no-flights {
+      text-align: center;
+      padding: 1rem;
+      color: #666;
+      font-style: italic;
+    }
+    .error-message {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .loading-data {
+      text-align: center;
+      padding: 1rem;
+      color: #0066cc;
+      font-style: italic;
+    }
+    .back {
+      display: inline-block;
+      text-align: center;
+      margin-top: 2rem;
+      color: #555;
+      padding: 0.5rem 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      transition: background 0.3s ease;
+    }
+    .back:hover {
+      background: #e9ecef;
+      text-decoration: none;
+    }
+    .results-sorting {
+      text-align: left;
+      margin-bottom: 1.5rem;
+      margin-top: 0.5rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .results-sorting label {
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    .results-sorting select {
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-right: 0.5rem;
+    }
+    .results-sorting button {
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0.3rem 1.1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .results-sorting .asc {
+      background: #28a745;
+      color: #fff;
+    }
+    .results-sorting .desc {
+      background: #ff9800;
+      color: #fff;
+    }
+    .ai-flash {
+      background: #ffe066 !important;
+      transition: background 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:1.2em;gap:1em;position:relative;">
+      <button type="button" class="back" onclick="window.history.back();" style="font-size:1.1em; padding:0.7em 2em; background:#f8f9fa; border-radius:6px; border:1px solid #e9ecef; color:#0066cc; font-weight:600; cursor:pointer; margin:0; position:absolute; left:0;">
+        ← Back to Search
+      </button>
+      <h1 style="margin:0;flex:0 1 auto;text-align:center;font-size:2rem;">Flight Search Results</h1>
+    </div>
+    
+    <div class="search-summary">
+      <h3 style="margin-top:0; color:#0066cc;">Search Details</h3>
+      <div class="date-block">
+        <span class="search-label">Origins:</span>
+        {% for code, name in zip(search_params.origin_codes, search_params.origins) %}
+          {% set country = country_code_map.get(code, '') %}
+          <span class="search-value">{{ name }}{% if country %}<img class="flag" src="https://flagcdn.com/24x18/{{ country }}.png" alt="{{ country }} flag" style="margin-left:0.3em;vertical-align:middle;">{% endif %}</span>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </div>
+      <div class="date-block">
+        <span class="search-label">Destinations:</span>
+        {% for code, name in zip(search_params.destination_codes, search_params.destinations) %}
+          {% set country = country_code_map.get(code, '') %}
+          <span class="search-value">{{ name }}{% if country %}<img class="flag" src="https://flagcdn.com/24x18/{{ country }}.png" alt="{{ country }} flag" style="margin-left:0.3em;vertical-align:middle;">{% endif %}</span>{% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </div>
+      <div class="date-block">
+        <span class="search-label">Departure:</span>
+        <span class="search-value">
+          {{ search_params.ida_start | datetimeformat('%a, %d %b %Y') }}
+          {% if search_params.ida_start != search_params.ida_end %}
+            - {{ search_params.ida_end | datetimeformat('%a, %d %b %Y') }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="date-block">
+        <span class="search-label">Return:</span>
+        <span class="search-value">
+          {{ search_params.vuelta_start | datetimeformat('%a, %d %b %Y') }}
+          {% if search_params.vuelta_start != search_params.vuelta_end %}
+            - {{ search_params.vuelta_end | datetimeformat('%a, %d %b %Y') }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="date-block">
+        <span class="search-label">Minimum stay:</span>
+        <span class="search-value">{{ search_params.min_days }} day{{ 's' if search_params.min_days != 1 else '' }}</span>
+      </div>
+    </div>
+
+    <!-- AI Recommendations section -->
+    <div id="ai-recommendations" style="background:#e3f2fd;padding:1.2rem 1.5rem;margin-bottom:2rem;border-radius:8px;border-left:4px solid #28a745;box-shadow:0 2px 8px rgba(40,167,69,0.07);font-size:1.13rem;text-align:center;transition:background 0.5s;">
+      <strong>AI Recommendation:</strong> <span id="ai-recommendation-text">Analyzing flight options...</span>
+    </div>
+
+    <div class="results-header" style="display:flex;align-items:center;justify-content:space-between;gap:2em;">
+      <div class="results-count" id="results-count" style="display:flex;align-items:center;gap:1em;">
+        <span id="results-count-text">Found <strong>0</strong> flight combination<span id="results-count-s"></span></span>
+        <span id="results-spinner" style="display:none;align-items:center;gap:0.5em;">
+          <div class="spinner" style="width:24px;height:24px;border-width:3px;display:inline-block;vertical-align:middle;"></div>
+          <span style="font-size:1rem;color:#0066cc;vertical-align:middle;">Scanning and fetching flight data, please wait...</span>
+        </span>
+      </div>
+      <div class="results-sorting" id="results-sorting" style="margin-bottom:0;">
+      <label for="sort-type">Sort by:</label>
+      <select id="sort-type" onchange="sortSquaresUI()">
+        <option value="direct">Direct Price</option>
+        <option value="one-stop">1-Stop Price</option>
+        <option value="multi-stop">2+ Stops Price</option>
+      </select>
+      <button id="sort-order-btn" onclick="toggleSortOrderAndSort()" type="button" class="asc">Ascending ⬆️</button>
+    </div>
+    </div>
+
+    <div id="results-section">
+      <div id="results-loading" class="loading-indicator" style="display:none;"></div>
+      <div id="results-content" style="display:none;">
+        {% include 'results_content.html' %}
+      </div>
+  </div>
+
+  <script>
+    window.AIRPORTS = JSON.parse('{{ AIRPORTS|tojson|safe }}');
+    window.country_code_map = JSON.parse('{{ country_code_map|tojson|safe }}');
+    window.searchParams = JSON.parse('{{ search_params|tojson|safe }}');
+    window.flagMap = JSON.parse('{{ flag_map|tojson|safe }}');
+    window.countryCodeMap = JSON.parse('{{ country_code_map|tojson|safe }}');
+    const searchId = window.searchParams.search_id;
+    let flightOptions = [];
+
+    // Cancel search on page unload
+    window.addEventListener('beforeunload', function() {
+      if (window.searchParams && window.searchParams.search_id) {
+        navigator.sendBeacon(`/cancel_search/${window.searchParams.search_id}`);
+      }
+    });
+
+    function renderResults(options, allReady) {
+      fetch('/render_results_content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ options: options, search_params: window.searchParams, flag_map: window.flagMap, country_code_map: window.countryCodeMap, AIRPORTS: window.AIRPORTS })
+      })
+      .then(response => response.text())
+      .then(html => {
+        document.getElementById('results-content').innerHTML = html;
+        document.getElementById('results-content').style.display = '';
+        colorPricesByRatio();
+        updateAIRecommendation(flightOptions);
+        // Update the count and spinner
+        const count = options.length;
+        document.getElementById('results-count-text').innerHTML =
+          `Found <strong>${count}</strong> flight combination${count !== 1 ? 's' : ''}`;
+        document.getElementById('results-spinner').style.display = allReady ? 'none' : '';
+      });
+    }
+
+    function updateAIRecommendation(options) {
+      const recText = document.getElementById('ai-recommendation-text');
+      const aiBox = document.getElementById('ai-recommendations');
+      const prev = recText.innerHTML;
+      let best = null, bestType = '', bestPrice = 9999999, bestOption = null, bestFlight = null;
+      let cheapestDirect = null, cheapestOneStop = null, cheapestMultiStop = null;
+      let cheapestDirectOpt = null, cheapestOneStopOpt = null, cheapestMultiStopOpt = null;
+
+      // Collect all prices for ratio coloring
+      let allPrices = [];
+      options.forEach(option => {
+        if (!option.flight_data) return;
+        ['direct_flights', 'one_stop_flights', 'multi_stop_flights'].forEach(type => {
+          if (option.flight_data[type] && option.flight_data[type].length) {
+            option.flight_data[type].forEach(flight => {
+              let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+              if (price) allPrices.push(price);
+            });
+          }
+        });
+      });
+      allPrices = allPrices.filter(v => v > 0).sort((a, b) => a - b);
+
+      function getPriceColor(price) {
+        if (!price || allPrices.length === 0) return '#28a745';
+        const idx = allPrices.indexOf(price);
+        const pct = idx / (allPrices.length - 1 || 1);
+        if (pct <= 0.2) {
+          const t = pct / 0.2;
+          return lerpColor('#43b943', '#28a745', t);
+        } else if (pct >= 0.8) {
+          const t = (pct - 0.8) / 0.2;
+          return lerpColor('#dc3545', '#7a1a1a', t);
+        } else {
+          return '#ff9800';
+        }
+      }
+
+      options.forEach(option => {
+        if (!option.flight_data) return;
+        // Direct
+        if (option.flight_data.direct_flights && option.flight_data.direct_flights.length) {
+          option.flight_data.direct_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestDirect || price < cheapestDirect.price)) {
+              cheapestDirect = flight;
+              cheapestDirect.price = price;
+              cheapestDirectOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = 'Direct'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+        // 1-Stop
+        if (option.flight_data.one_stop_flights && option.flight_data.one_stop_flights.length) {
+          option.flight_data.one_stop_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestOneStop || price < cheapestOneStop.price)) {
+              cheapestOneStop = flight;
+              cheapestOneStop.price = price;
+              cheapestOneStopOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = '1-Stop'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+        // 2+ Stops
+        if (option.flight_data.multi_stop_flights && option.flight_data.multi_stop_flights.length) {
+          option.flight_data.multi_stop_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestMultiStop || price < cheapestMultiStop.price)) {
+              cheapestMultiStop = flight;
+              cheapestMultiStop.price = price;
+              cheapestMultiStopOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = '2+ Stops'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+      });
+
+      function formatRec(type, opt, flight) {
+        if (!opt || !flight) return '';
+        const originCode = opt.origin, destCode = opt.destination;
+        const AIRPORTS = window.AIRPORTS || {};
+        const countryCodeMap = window.country_code_map || {};
+        const originName = AIRPORTS[originCode] || originCode;
+        const destName = AIRPORTS[destCode] || destCode;
+        const originFlag = countryCodeMap[originCode] ? `<img src=\"https://flagcdn.com/24x18/${countryCodeMap[originCode]}.png\" alt=\"${countryCodeMap[originCode]} flag\" style=\"vertical-align:middle;margin-left:0.3em;\">` : '';
+        const destFlag = countryCodeMap[destCode] ? `<img src=\"https://flagcdn.com/24x18/${countryCodeMap[destCode]}.png\" alt=\"${countryCodeMap[destCode]} flag\" style=\"vertical-align:middle;margin-left:0.3em;\">` : '';
+        const price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+        const color = getPriceColor(price);
+        const formattedPrice = price ? price.toLocaleString() : flight.price;
+        return `<div style=\"margin:0.5em 0;\"><span style=\"font-weight:600;\">${type}:</span> ${originName}${originFlag} → ${destName}${destFlag} for <span style=\"color:${color};font-weight:700;font-size:1.1em;\">$${formattedPrice}</span></div>`;
+      }
+
+      let html = '';
+      if (bestOption && bestFlight) {
+        html += `<div style=\"margin-bottom:0.7em;\"><span style=\"font-weight:700;text-decoration:underline;\">Best overall:</span> ${formatRec(bestType, bestOption, bestFlight)}</div>`;
+      }
+      if (cheapestDirectOpt && cheapestDirect) {
+        html += formatRec('Cheapest Direct', cheapestDirectOpt, cheapestDirect);
+      }
+      if (cheapestOneStopOpt && cheapestOneStop) {
+        html += formatRec('Cheapest 1-Stop', cheapestOneStopOpt, cheapestOneStop);
+      }
+      if (cheapestMultiStopOpt && cheapestMultiStop) {
+        html += formatRec('Cheapest 2+ Stops', cheapestMultiStopOpt, cheapestMultiStop);
+      }
+      if (!html) html = 'No recommendation yet. Waiting for flight data...';
+      recText.innerHTML = html;
+
+      // Add detailed AI-generated summary
+      let aiSummary = '';
+      if (cheapestDirect && (cheapestOneStop || cheapestMultiStop)) {
+        const directPrice = parseInt((cheapestDirect.price || '').toString().replace(/\D/g, ''));
+        let bestConn = null, bestConnType = '';
+        if (cheapestOneStop && (!cheapestMultiStop || parseInt((cheapestOneStop.price || '').toString().replace(/\D/g, '')) <= parseInt((cheapestMultiStop.price || '').toString().replace(/\D/g, '')))) {
+          bestConn = cheapestOneStop;
+          bestConnType = '1-stop';
+        } else if (cheapestMultiStop) {
+          bestConn = cheapestMultiStop;
+          bestConnType = '2+ stops';
+        }
+        if (bestConn) {
+          const connPrice = parseInt((bestConn.price || '').toString().replace(/\D/g, ''));
+          const diff = directPrice - connPrice;
+          if (diff > 0 && diff <= 100) {
+            aiSummary = `Although the direct flight is only $${diff} more expensive than the cheapest ${bestConnType} option, it may be worth paying a bit extra for the convenience and time savings of a nonstop journey.`;
+          } else if (diff > 100) {
+            aiSummary = `The direct flight is $${diff} more expensive than the cheapest ${bestConnType} option. If you are flexible and want to save money, consider a connecting flight.`;
+          } else if (diff < 0) {
+            aiSummary = `The direct flight is actually cheaper than the best connecting option, making it the best value for both price and convenience.`;
+          } else {
+            aiSummary = `The price difference between direct and connecting flights is minimal, so you can choose based on your preference for convenience or flexibility.`;
+          }
+        }
+      } else if (cheapestDirect) {
+        aiSummary = `Only direct flights are available, offering the fastest and most convenient option.`;
+      } else if (cheapestOneStop || cheapestMultiStop) {
+        aiSummary = `No direct flights are available. Consider the best connecting option for your trip.`;
+      }
+      if (aiSummary) {
+        recText.innerHTML += `<div style=\"margin-top:1em;font-size:1.05em;color:#333;text-align:center;\"><b>AI insight:</b> ${aiSummary}</div>`;
+      }
+      // Highlight if changed
+      if (recText.innerHTML !== prev) {
+        aiBox.classList.add('ai-flash');
+        setTimeout(() => aiBox.classList.remove('ai-flash'), 600);
+      }
+    }
+
+    function colorPricesByRatio() {
+      // Collect all .flight-price elements across all types
+      const priceEls = Array.from(document.querySelectorAll('.flight-item .flight-price'));
+        const prices = priceEls
+          .map(el => parseInt((el.textContent || '').replace(/\D/g, '')))
+          .filter(v => v > 0);
+
+        if (prices.length === 0) return;
+
+        // Sort prices and keep original indices
+        const sorted = prices.slice().sort((a, b) => a - b);
+
+        priceEls.forEach(el => {
+          const price = parseInt((el.textContent || '').replace(/\D/g, ''));
+          if (!price) return;
+          const idx = sorted.indexOf(price);
+          const pct = idx / (sorted.length - 1 || 1);
+          if (pct <= 0.2) {
+            // Light to normal green gradient
+            const t = pct / 0.2;
+            el.style.color = lerpColor('#43b943', '#28a745', t);
+          } else if (pct >= 0.8) {
+            // Normal to dark red gradient
+            const t = (pct - 0.8) / 0.2;
+            el.style.color = lerpColor('#dc3545', '#7a1a1a', t);
+          } else {
+            el.style.color = '#ff9800'; // orange
+          }
+      });
+    }
+
+    // Helper to interpolate between two hex colors
+    function lerpColor(a, b, t) {
+      const ah = a.replace('#', ''), bh = b.replace('#', '');
+      const ar = parseInt(ah.substring(0, 2), 16), ag = parseInt(ah.substring(2, 4), 16), ab = parseInt(ah.substring(4, 6), 16);
+      const br = parseInt(bh.substring(0, 2), 16), bg = parseInt(bh.substring(2, 4), 16), bb = parseInt(bh.substring(4, 6), 16);
+      const rr = Math.round(ar + t * (br - ar));
+      const rg = Math.round(ag + t * (bg - ag));
+      const rb = Math.round(ab + t * (bb - ab));
+      return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb).toString(16).slice(1);
+    }
+    function pollResults() {
+      fetch(`/get_flight_data_status/${searchId}`)
+        .then(response => response.json())
+        .then(data => {
+          flightOptions = data.data || [];
+          const readyOptions = flightOptions.filter(opt => opt.flight_data && (opt.flight_data.direct_flights.length || opt.flight_data.one_stop_flights.length || opt.flight_data.multi_stop_flights.length));
+          const allReady = flightOptions.length > 0 && flightOptions.every(opt => !opt.loading);
+          renderResults(readyOptions, allReady);
+          if (!allReady) {
+            setTimeout(pollResults, 2000);
+          }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      pollResults();
+    });
+  </script>
+</body>
+</html>

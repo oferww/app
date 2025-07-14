@@ -1,0 +1,6 @@
+flask>=2.0
+beautifulsoup4>=4.9
+playwright>=1.30
+requests>=2.25
+# For AI recommendations (Cohere API)
+cohere>=4.0 

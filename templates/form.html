@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>✈️ Lifely 🌎</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.css" />
+  <style>
+    body {
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(to right, #e3f2fd, #ffffff);
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+    .container {
+      max-width: 1100px;
+      background: #fff;
+      padding: 3.5rem 3rem 2.5rem 3rem;
+      margin: 0 auto;
+      border-radius: 18px;
+      box-shadow: 0 10px 32px rgba(0,0,0,0.10);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 1.9rem;
+      color: #0066cc;
+    }
+    p.description {
+      text-align: center;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      color: #555;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #0066cc;
+      font-size: 0.95rem;
+    }
+    select, input[type="date"], input[type="number"] {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    select:focus, input[type="date"]:focus, input[type="number"]:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+      outline: none;
+    }
+    /* Initially hide errors and red border */
+    .error-message {
+      color: #dc3545;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .form-group.error .error-message {
+      display: block;
+    }
+    .form-group.error select,
+    .form-group.error input {
+      border-color: #dc3545;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 1rem;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background-color: #004f9a;
+      transform: translateY(-2px);
+    }
+    .btn-submit:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .multi-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .multi-btn {
+      background: #f4f6fa;
+      border: 1.5px solid #b0c4de;
+      border-radius: 7px;
+      padding: 0.5rem 1.1rem;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #0066cc;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      outline: none;
+    }
+    .multi-btn.selected {
+      background: #0066cc;
+      color: #fff;
+      border-color: #0066cc;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,102,204,0.08);
+    }
+    .multi-btn:disabled {
+      background: #e0e0e0;
+      color: #aaa;
+      border-color: #ccc;
+      cursor: not-allowed;
+    }
+    .custom-multiselect {
+      position: relative;
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+    .dropdown-label {
+      background: #f4f6fa;
+      border: 1.5px solid #b0c4de;
+      border-radius: 7px;
+      padding: 0.7rem 1.1rem;
+      font-size: 1rem;
+      color: #0066cc;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      min-height: 1.5em;
+      user-select: none;
+    }
+    .dropdown-label.active, .dropdown-label:focus {
+      border-color: #0066cc;
+      box-shadow: 0 2px 8px rgba(0,102,204,0.08);
+    }
+    .dropdown-list {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1.5px solid #b0c4de;
+      border-radius: 7px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      z-index: 10;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 0.2rem;
+    }
+    .custom-multiselect.open .dropdown-list {
+      display: block;
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dropdown-item:hover {
+      background: #e3f2fd;
+    }
+    .dropdown-item input[type="checkbox"] {
+      margin-right: 0.7em;
+      accent-color: #0066cc;
+      width: 1.1em;
+      height: 1.1em;
+    }
+    .dropdown-item.selected {
+      background: #0066cc;
+      color: #fff;
+    }
+    .dropdown-item input[type="checkbox"]:disabled + span,
+    .dropdown-item input[type="checkbox"]:disabled {
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    .dropdown-search {
+      display: block;
+      margin-bottom: 0.4em;
+      border: 1px solid #b0c4de;
+      border-radius: 5px;
+      font-size: 1em;
+      padding: 0.4em 0.7em;
+      width: 95%;
+      box-sizing: border-box;
+    }
+    .datepicker-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      margin: 0;
+    }
+    .modern-datepicker {
+      width: 100%;
+      min-width: 180px;
+      max-width: 370px;
+      padding: 1.1rem 2.5rem 1.1rem 1.1rem;
+      border: 1.5px solid #b0c4de;
+      border-radius: 10px;
+      font-size: 1.08rem;
+      background: #f8fbff;
+      color: #222;
+      box-shadow: 0 2px 8px rgba(0,102,204,0.06);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      cursor: pointer;
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .modern-datepicker:focus {
+      border-color: #0066cc;
+      box-shadow: 0 0 0 2px #e3f2fd;
+      background: #fff;
+    }
+    .datepicker-icon {
+      position: absolute;
+      right: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.3rem;
+      color: #0066cc;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    /* Litepicker popup overrides */
+    .litepicker {
+      border-radius: 14px !important;
+      box-shadow: 0 8px 32px rgba(0,102,204,0.13) !important;
+      font-family: 'Poppins', 'Nunito', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+      font-size: 1.05rem !important;
+      border: 1.5px solid #b0c4de !important;
+      background: #f8fbff !important;
+    }
+    .litepicker .container__days .day-item.is-today {
+      background: #e3f2fd !important;
+      color: #0066cc !important;
+      border-radius: 7px !important;
+    }
+    .litepicker .container__days .day-item.is-selected {
+      background: #0066cc !important;
+      color: #fff !important;
+      border-radius: 7px !important;
+    }
+    .litepicker .container__days .day-item:hover {
+      background: #b0c4de !important;
+      color: #0066cc !important;
+      border-radius: 7px !important;
+    }
+    .litepicker .container__months {
+      border-radius: 10px !important;
+      background: #fff !important;
+      box-shadow: 0 2px 8px rgba(0,102,204,0.06) !important;
+    }
+    .litepicker .container__header {
+      background: #f4f6fa !important;
+      border-radius: 10px 10px 0 0 !important;
+      color: #0066cc !important;
+      font-weight: 600 !important;
+    }
+    .litepicker .container__footer {
+      background: #f4f6fa !important;
+      border-radius: 0 0 10px 10px !important;
+    }
+    /* Responsive row for origin/destination */
+    .origin-destination-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    @media (min-width: 700px) {
+      .origin-destination-row {
+        flex-direction: row;
+        gap: 2.5rem;
+      }
+      #origin-group, #destination-group {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+    }
+    /* Responsive row for date pickers and min stay */
+    .datepickers-row {
+      display: flex;
+      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    @media (min-width: 700px) {
+      .datepickers-row {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 3.2rem;
+        align-items: flex-end;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+      }
+      #ida-range-group, #vuelta-range-group, #min-days-group {
+        min-width: 260px;
+      }
+      #ida-range-group, #vuelta-range-group {
+        flex: 1 1 0;
+        max-width: 440px;
+      }
+      #min-days-group {
+        flex: 0 0 160px;
+        max-width: 160px;
+        min-width: 120px;
+        align-self: flex-end;
+      }
+    }
+    @media (min-width: 700px) and (max-width: 1050px) {
+      .container {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✈️ Lifely 🌎</h1>
+    <p class="description">Find the best flight combinations for your next adventure.<br><span style="color:#0066cc;">(Flight data is sourced from <a href='https://www.bookaflight.co.il' target='_blank' style='color:#0066cc;text-decoration:underline;'>bookaflight.co.il</a>)</span></p>
+
+    <form method="POST" id="flight-search-form">
+      <div class="origin-destination-row">
+        <div class="form-group" id="origin-group">
+          <label for="origin">Origin:</label>
+          <div class="custom-multiselect" id="origin-dropdown">
+            <div class="dropdown-label" id="origin-label">Select origins</div>
+            <div class="dropdown-list" id="origin-list">
+              <input type="text" class="dropdown-search" placeholder="Search..." autocomplete="off" style="width:95%;margin:0.5em 2.5%;padding:0.4em 0.7em;border-radius:5px;border:1px solid #b0c4de;font-size:1em;">
+              {% for code, name in airports.items() %}
+                <label class="dropdown-item" data-search="{{ code|lower }} {{ name|lower }}">
+                  <input type="checkbox" class="origin-checkbox" value="{{ code }}"> {{ name }}
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" id="origin" name="origin" required>
+          <small>Select up to 5 origins</small>
+          <div class="error-message">Please select an origin airport.</div>
+        </div>
+        <div class="form-group" id="destination-group">
+          <label for="destination">Destination:</label>
+          <div class="custom-multiselect" id="destination-dropdown">
+            <div class="dropdown-label" id="destination-label">Select destinations</div>
+            <div class="dropdown-list" id="destination-list">
+              <input type="text" class="dropdown-search" placeholder="Search..." autocomplete="off" style="width:95%;margin:0.5em 2.5%;padding:0.4em 0.7em;border-radius:5px;border:1px solid #b0c4de;font-size:1em;">
+              {% for code, name in airports.items() %}
+                <label class="dropdown-item" data-search="{{ code|lower }} {{ name|lower }}">
+                  <input type="checkbox" class="destination-checkbox" value="{{ code }}"> {{ name }}
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" id="destination" name="destination" required>
+          <small>Select up to 5 destinations</small>
+          <div class="error-message">Please select a destination airport.</div>
+          <div class="error-message" id="destination-same-error" style="display: none;">Origin and Destination cannot be the same.</div>
+        </div>
+      </div>
+
+      <div class="datepickers-row">
+        <div class="form-group" id="ida-range-group">
+          <label for="ida_range">Departure Date Range:</label>
+          <div class="datepicker-wrapper">
+            <input type="text" id="ida_range" name="ida_range" required readonly class="modern-datepicker" placeholder="Select departure range">
+            <span class="datepicker-icon">📅</span>
+          </div>
+          <input type="hidden" id="ida_start" name="ida_start">
+          <input type="hidden" id="ida_end" name="ida_end">
+          <div class="error-message">Please select a departure date range.</div>
+        </div>
+        <div class="form-group" id="vuelta-range-group">
+          <label for="vuelta_range">Return Date Range:</label>
+          <div class="datepicker-wrapper">
+            <input type="text" id="vuelta_range" name="vuelta_range" required readonly class="modern-datepicker" placeholder="Select return range">
+            <span class="datepicker-icon">📅</span>
+          </div>
+          <input type="hidden" id="vuelta_start" name="vuelta_start">
+          <input type="hidden" id="vuelta_end" name="vuelta_end">
+          <div class="error-message">Please select a return date range.</div>
+        </div>
+        <div class="form-group" id="min-days-group">
+          <label for="min_days">Min Stay:</label>
+          <input type="number" id="min_days" name="min_days" value="2" min="1" required style="max-width:120px;">
+          <div class="error-message">Please enter a valid minimum stay.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" disabled>Search Flights</button>
+      <div id="combination-limit-error" style="color:#dc3545; font-size:1rem; margin-top:1em; display:none; text-align:center; font-weight:600;"></div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+  <script>
+    window.AIRPORTS = JSON.parse('{{ airports|tojson|safe }}');
+  </script>
+  <script>
+    const form = document.getElementById('flight-search-form');
+    const origin = document.getElementById('origin');
+    const destination = document.getElementById('destination');
+    const minDays = document.getElementById('min_days');
+    const submitButton = document.querySelector('.btn-submit');
+
+    // Helper to get today's date in YYYY-MM-DD format
+    function getTodayDate() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // Multi-select dropdown logic for origins and destinations
+    function setupMultiDropdown(dropdownId, labelId, listId, hiddenInputId, maxSelect) {
+      const dropdown = document.getElementById(dropdownId);
+      const label = document.getElementById(labelId);
+      const list = document.getElementById(listId);
+      const checkboxes = Array.from(list.querySelectorAll('input[type="checkbox"]'));
+      const hiddenInput = document.getElementById(hiddenInputId);
+      let selected = [];
+
+      // Store original order of items
+      const items = Array.from(list.querySelectorAll('.dropdown-item'));
+      items.forEach((item, idx) => item.setAttribute('data-original-index', idx));
+
+      // Search filter logic
+      const searchInput = list.querySelector('.dropdown-search');
+      searchInput.addEventListener('input', function() {
+        const val = this.value.trim().toLowerCase();
+        items.forEach(item => {
+          const search = item.getAttribute('data-search');
+          if (!val || search.includes(val)) {
+            item.style.display = '';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+
+      // Helper to reorder selected items to top
+      function reorderItems() {
+        // Get selected and unselected items
+        const selectedItems = items.filter(item => item.querySelector('input[type="checkbox"]').checked);
+        const unselectedItems = items.filter(item => !item.querySelector('input[type="checkbox"]').checked);
+        // Sort unselected by original index
+        unselectedItems.sort((a, b) => {
+          return parseInt(a.getAttribute('data-original-index')) - parseInt(b.getAttribute('data-original-index'));
+        });
+        // Remove all items
+        items.forEach(item => list.appendChild(item)); // This just keeps them in DOM
+        // Append selected first, then unselected
+        selectedItems.forEach(item => list.appendChild(item));
+        unselectedItems.forEach(item => list.appendChild(item));
+      }
+
+      // Toggle dropdown
+      label.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+        label.classList.toggle('active');
+        if (dropdown.classList.contains('open')) {
+          searchInput.value = '';
+          searchInput.dispatchEvent(new Event('input'));
+          searchInput.focus();
+        }
+      });
+      // Close dropdown on outside click
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+          label.classList.remove('active');
+        }
+      });
+      // Handle selection
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          const val = cb.value;
+          if (cb.checked) {
+            if (selected.length < maxSelect) {
+              selected.push(val);
+            } else {
+              cb.checked = false;
+            }
+          } else {
+            selected = selected.filter(v => v !== val);
+          }
+          // Update label
+          if (selected.length === 0) {
+            label.textContent = labelId.includes('origin') ? 'Select origins' : 'Select destinations';
+          } else {
+            label.textContent = selected.map(code => {
+              const full = window.AIRPORTS[code] || code;
+              return full.split(' (')[0];
+            }).join(', ');
+          }
+          // Highlight selected items
+          checkboxes.forEach(box => {
+            const item = box.closest('.dropdown-item');
+            if (box.checked) {
+              item.classList.add('selected');
+            } else {
+              item.classList.remove('selected');
+            }
+          });
+          // Disable unchecked if max reached
+          if (selected.length >= maxSelect) {
+            checkboxes.forEach(box => {
+              if (!box.checked) box.disabled = true;
+            });
+          } else {
+            checkboxes.forEach(box => box.disabled = false);
+          }
+          hiddenInput.value = selected.join(',');
+          reorderItems();
+          updateSubmitButtonState();
+        });
+      });
+    }
+
+    // Set min attribute for date inputs on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = getTodayDate();
+      // Initial update for the submit button state only, no visual errors shown
+      updateSubmitButtonState();
+      setupMultiDropdown('origin-dropdown', 'origin-label', 'origin-list', 'origin', 5);
+      setupMultiDropdown('destination-dropdown', 'destination-label', 'destination-list', 'destination', 5);
+
+      // Restore selections from localStorage for custom multiselect
+      const lastOrigins = JSON.parse(localStorage.getItem('last_origins') || '[]');
+      if (lastOrigins.length) {
+        document.querySelectorAll('#origin-list input[type="checkbox"]').forEach(cb => {
+          if (lastOrigins.includes(cb.value)) {
+            cb.checked = true;
+            cb.dispatchEvent(new Event('change'));
+          }
+        });
+      }
+      const lastDestinations = JSON.parse(localStorage.getItem('last_destinations') || '[]');
+      if (lastDestinations.length) {
+        document.querySelectorAll('#destination-list input[type="checkbox"]').forEach(cb => {
+          if (lastDestinations.includes(cb.value)) {
+            cb.checked = true;
+            cb.dispatchEvent(new Event('change'));
+          }
+        });
+      }
+
+      // Departure range picker
+      const idaPicker = new Litepicker({
+        element: document.getElementById('ida_range'),
+        singleMode: false,
+        format: 'YYYY-MM-DD',
+        minDate: getTodayDate(),
+        setup: (picker) => {
+          picker.on('selected', (date1, date2) => {
+            document.getElementById('ida_start').value = date1 ? date1.format('YYYY-MM-DD') : '';
+            document.getElementById('ida_end').value = date2 ? date2.format('YYYY-MM-DD') : '';
+            // Update vueltaPicker's minDate to ida_start
+            if (date1) {
+              vueltaPicker.setOptions({ minDate: date1.format('YYYY-MM-DD') });
+              // If current return start is before new ida_start, clear return fields
+              const vueltaStart = document.getElementById('vuelta_start').value;
+              if (vueltaStart && vueltaStart < date1.format('YYYY-MM-DD')) {
+                document.getElementById('vuelta_start').value = '';
+                document.getElementById('vuelta_end').value = '';
+                document.getElementById('vuelta_range').value = '';
+                vueltaPicker.clearSelection();
+              }
+            } else {
+              // If no ida_start, reset vueltaPicker's minDate to today
+              vueltaPicker.setOptions({ minDate: getTodayDate() });
+            }
+          });
+        }
+      });
+
+      // Return range picker
+      const vueltaPicker = new Litepicker({
+        element: document.getElementById('vuelta_range'),
+        singleMode: false,
+        format: 'YYYY-MM-DD',
+        minDate: getTodayDate(),
+        setup: (picker) => {
+          picker.on('selected', (date1, date2) => {
+            document.getElementById('vuelta_start').value = date1 ? date1.format('YYYY-MM-DD') : '';
+            document.getElementById('vuelta_end').value = date2 ? date2.format('YYYY-MM-DD') : '';
+          });
+        }
+      });
+    });
+
+    // --- Validation Functions ---
+    // Added showVisuals parameter to control error display and red border
+    function showError(element, specificErrorId = null, showVisuals = true) {
+      const formGroup = element.closest('.form-group');
+      if (formGroup && showVisuals) { // Only show visuals if showVisuals is true
+        formGroup.classList.add('error'); // Add red border
+        if (specificErrorId) {
+          const specificError = document.getElementById(specificErrorId);
+          if (specificError) specificError.style.display = 'block'; // Show specific message
+        } else {
+          const defaultErrorMessage = formGroup.querySelector('.error-message:not([id])');
+          if (defaultErrorMessage) defaultErrorMessage.style.display = 'block'; // Show default message
+        }
+      }
+    }
+
+    function hideError(element, specificErrorId = null) {
+      const formGroup = element.closest('.form-group');
+      if (formGroup) {
+        if (specificErrorId) {
+          const specificError = document.getElementById(specificErrorId);
+          if (specificError) specificError.style.display = 'none';
+        } else {
+          const defaultErrorMessage = formGroup.querySelector('.error-message:not([id])');
+          if (defaultErrorMessage) defaultErrorMessage.style.display = 'none';
+        }
+        // Check if all error messages (default and specific) for this group are hidden
+        const allErrorsHidden = Array.from(formGroup.querySelectorAll('.error-message')).every(err => err.style.display === 'none');
+        if (allErrorsHidden) {
+            formGroup.classList.remove('error'); // Remove red border
+        }
+      }
+    }
+
+    // Individual validation functions now accept showVisuals and pass it to showError
+    function validateOrigin(showVisuals = false) {
+      const isValid = origin.value !== '';
+      if (!isValid) {
+        showError(origin, null, showVisuals);
+      } else {
+        hideError(origin);
+      }
+      return isValid;
+    }
+
+    function validateDestination(showVisuals = false) {
+      const isValid = destination.value !== '';
+      const isSame = origin.value === destination.value && origin.value !== '';
+
+      hideError(destination, 'destination-same-error'); 
+      hideError(destination); 
+
+      if (!isValid) {
+        showError(destination, null, showVisuals);
+      } else if (isSame) {
+        showError(destination, 'destination-same-error', showVisuals);
+      }
+      return isValid && !isSame;
+    }
+
+    function validateMinDays(showVisuals = false) {
+      const isValid = minDays.value !== '' && parseInt(minDays.value) >= 1;
+      if (!isValid) {
+        showError(minDays, null, showVisuals);
+      } else {
+        hideError(minDays);
+      }
+      return isValid;
+    }
+
+    // Add combination limit check
+    function getCombinationsCount() {
+      // Get selected origins and destinations
+      const origins = document.getElementById('origin').value.split(',').filter(Boolean);
+      const destinations = document.getElementById('destination').value.split(',').filter(Boolean);
+      // Get date ranges
+      const idaStartVal = document.getElementById('ida_start').value;
+      const idaEndVal = document.getElementById('ida_end').value;
+      const vueltaStartVal = document.getElementById('vuelta_start').value;
+      const vueltaEndVal = document.getElementById('vuelta_end').value;
+      const minDaysVal = parseInt(minDays.value, 10) || 0;
+      // Calculate number of combinations (approximate: all origin x destination x ida x vuelta pairs)
+      // For simplicity, assume 1 ida and 1 vuelta date each (can be improved if needed)
+      let idaCount = 1, vueltaCount = 1;
+      if (idaStartVal && idaEndVal) {
+        const start = new Date(idaStartVal);
+        const end = new Date(idaEndVal);
+        idaCount = Math.max(1, Math.floor((end - start) / (1000*60*60*24)) + 1);
+      }
+      if (vueltaStartVal && vueltaEndVal) {
+        const start = new Date(vueltaStartVal);
+        const end = new Date(vueltaEndVal);
+        vueltaCount = Math.max(1, Math.floor((end - start) / (1000*60*60*24)) + 1);
+      }
+      return origins.length * destinations.length * idaCount * vueltaCount;
+    }
+
+    function checkCombinationLimit() {
+      const count = getCombinationsCount();
+      const errorDiv = document.getElementById('combination-limit-error');
+      if (count > 500) {
+        errorDiv.style.display = '';
+        errorDiv.innerHTML = `Too many combinations (<b>${count}</b>). Limit is 500.<br>Reduce your date range, origins, or destinations to continue.`;
+        submitButton.disabled = true;
+      } else {
+        errorDiv.style.display = 'none';
+      }
+    }
+
+    // New function to just update the submit button's state based on current validity
+    function updateSubmitButtonState() {
+      // Calls validation functions with showVisuals=false to avoid showing errors
+      const allValid = validateOrigin(false) && validateDestination(false) && validateMinDays(false);
+      submitButton.disabled = !allValid;
+      return allValid;
+    }
+
+    // --- Event Listeners ---
+    // Individual fields validation on 'blur' (when the field loses focus)
+    // Always pass true to showVisuals for blur events to display errors after interaction
+    origin.addEventListener('blur', () => {
+      validateOrigin(true);
+      validateDestination(true); // Destination validation depends on origin
+      updateSubmitButtonState();
+    });
+
+    destination.addEventListener('blur', () => {
+      validateDestination(true);
+      updateSubmitButtonState();
+    });
+
+    minDays.addEventListener('blur', () => {
+      validateMinDays(true);
+      updateSubmitButtonState();
+    });
+    
+    // 'change' and 'input' listeners for dynamic updates and button state without showing errors
+    origin.addEventListener('change', updateSubmitButtonState);
+    destination.addEventListener('change', updateSubmitButtonState);
+    minDays.addEventListener('input', updateSubmitButtonState);
+
+    // Hook into all relevant changes
+    document.getElementById('origin').addEventListener('input', checkCombinationLimit);
+    document.getElementById('destination').addEventListener('input', checkCombinationLimit);
+    minDays.addEventListener('input', checkCombinationLimit);
+
+    // Initial check
+    checkCombinationLimit();
+
+    // Validate all fields and show errors when form is submitted
+    form.addEventListener('submit', (event) => {
+      // Run all validations, passing true to show all visuals on submit
+      const isFormValid = validateOrigin(true) && validateDestination(true) && validateMinDays(true);
+
+      if (!isFormValid) {
+        event.preventDefault(); // Prevent form submission if validation fails
+      }
+      updateSubmitButtonState(); // Ensure button state is final
+    });
+  </script>
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function() {
+      // Save all selected origins and destinations
+      const origins = Array.from(form.querySelectorAll('[name="origin"]')).filter(el => el.checked || el.selected).map(el => el.value);
+      const destinations = Array.from(form.querySelectorAll('[name="destination"]')).filter(el => el.checked || el.selected).map(el => el.value);
+      localStorage.setItem('last_origins', JSON.stringify(origins));
+      localStorage.setItem('last_destinations', JSON.stringify(destinations));
+    });
+    // On page load, restore if present
+    const lastOrigins = JSON.parse(localStorage.getItem('last_origins') || '[]');
+    const lastDestinations = JSON.parse(localStorage.getItem('last_destinations') || '[]');
+    if (lastOrigins.length) {
+      form.querySelectorAll('[name="origin"]').forEach(el => {
+        if (lastOrigins.includes(el.value)) el.checked = true;
+      });
+    }
+    if (lastDestinations.length) {
+      form.querySelectorAll('[name="destination"]').forEach(el => {
+        if (lastDestinations.includes(el.value)) el.checked = true;
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>

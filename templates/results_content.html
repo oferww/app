@@ -1,0 +1,121 @@
+{% if flight_options %}
+<ul id="flight-options-list">
+  {% for option in flight_options %}
+    <li id="flight-option-{{ option.id }}"
+        data-direct-price="{% if option.flight_data and option.flight_data.direct_flights %}{{ option.flight_data.direct_flights|map(attribute='price')|map('string')|map('replace', ',', '')|map('replace', '₪', '')|map('replace', '$', '')|map('replace', '€', '')|map('int')|min }}{% else %}9999999{% endif %}"
+        data-one-stop-price="{% if option.flight_data and option.flight_data.one_stop_flights %}{{ option.flight_data.one_stop_flights|map(attribute='price')|map('string')|map('replace', ',', '')|map('replace', '₪', '')|map('replace', '$', '')|map('replace', '€', '')|map('int')|min }}{% else %}9999999{% endif %}"
+        data-multi-stop-price="{% if option.flight_data and option.flight_data.multi_stop_flights %}{{ option.flight_data.multi_stop_flights|map(attribute='price')|map('string')|map('replace', ',', '')|map('replace', '₪', '')|map('replace', '$', '')|map('replace', '€', '')|map('int')|min }}{% else %}9999999{% endif %}">
+      <div class="flight-option-header">
+        <div class="flight-main">
+          <div class="flight-dates">
+            <div class="date-segment">
+              <div class="date-label">Origin</div>
+              <div class="date-value">
+                {% set origin_code = option.origin %}
+                {% set origin_name = AIRPORTS[origin_code] %}
+                {% set origin_flag = country_code_map.get(origin_code, '') %}
+                {{ origin_name }}
+                {% if origin_flag %}
+                  <img src="https://flagcdn.com/24x18/{{ origin_flag }}.png" alt="{{ origin_flag }} flag" style="vertical-align:middle; margin-left:0.3em;">
+                {% endif %}
+              </div>
+              <div class="date-value" style="font-size:1.1rem;font-weight:600;color:#0066cc;margin-bottom:0.2rem;">{{ option.departure_date }}</div>
+              <div class="day-name" style="margin-bottom:0.5rem;">{{ option.departure_day }}</div>
+            </div>
+            <div class="duration-info" style="margin:0 1rem;">
+              <div class="duration-label">Trip Duration</div>
+              <div class="duration-value" style="font-size:1.2rem;font-weight:700;color:#333;">{{ option.duration }} day{{ 's' if option.duration != 1 else '' }}</div>
+            </div>
+            <div class="date-segment">
+              <div class="date-label">Destination</div>
+              <div class="date-value">
+                {% set dest_code = option.destination %}
+                {% set dest_name = AIRPORTS[dest_code] %}
+                {% set dest_flag = country_code_map.get(dest_code, '') %}
+                {{ dest_name }}
+                {% if dest_flag %}
+                  <img src="https://flagcdn.com/24x18/{{ dest_flag }}.png" alt="{{ dest_flag }} flag" style="vertical-align:middle; margin-left:0.3em;">
+                {% endif %}
+              </div>
+              <div class="date-value" style="font-size:1.1rem;font-weight:600;color:#0066cc;margin-bottom:0.2rem;">{{ option.return_date }}</div>
+              <div class="day-name" style="margin-bottom:0.5rem;">{{ option.return_day }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="flight-actions">
+          <a href="{{ option.url }}" target="_blank" class="search-btn">
+            Search This Flight
+          </a>
+          <div class="option-number">#{{ loop.index }}</div>
+        </div>
+      </div>
+      <div class="flight-data" id="flight-data-{{ option.id }}">
+        <h4>Available Flights & Prices</h4>
+        {% if option.flight_data and option.flight_data.error %}
+        <div class="error-message">
+          <strong>Notice:</strong> {{ option.flight_data.error }}
+        </div>
+        {% endif %}
+        <div class="flight-categories">
+          <div class="flight-category direct-flights" id="direct-flights-{{ option.id }}">
+            <div class="category-header">
+              <span class="category-icon">✈️</span>
+              <span>Direct Flights (טיסות ישירות)</span>
+            </div>
+            <div class="flight-list" id="direct-flights-list-{{ option.id }}">
+              {% if option.flight_data and option.flight_data.direct_flights %}
+                {% for flight in option.flight_data.direct_flights %}
+                  <div class="flight-item">
+                    <div class="flight-price">{{ flight.price }}</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="no-flights">No direct flights found.</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flight-category one-stop-flights" id="one-stop-flights-{{ option.id }}">
+            <div class="category-header">
+              <span class="category-icon">🔄</span>
+              <span>1 Stop (1 עצירה ביניים)</span>
+            </div>
+            <div class="flight-list" id="one-stop-flights-list-{{ option.id }}">
+              {% if option.flight_data and option.flight_data.one_stop_flights %}
+                {% for flight in option.flight_data.one_stop_flights %}
+                  <div class="flight-item">
+                    <div class="flight-price">{{ flight.price }}</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="no-flights">No 1-stop flights found.</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flight-category multi-stop-flights" id="multi-stop-flights-{{ option.id }}">
+            <div class="category-header">
+              <span class="category-icon">🔄🔄</span>
+              <span>2+ Stops (2+ עצירות ביניים)</span>
+            </div>
+            <div class="flight-list" id="multi-stop-flights-list-{{ option.id }}">
+              {% if option.flight_data and option.flight_data.multi_stop_flights %}
+                {% for flight in option.flight_data.multi_stop_flights %}
+                  <div class="flight-item">
+                    <div class="flight-price">{{ flight.price }}</div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="no-flights">No 2+ stop flights found.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if not option.loading and option.flight_data and not (option.flight_data.direct_flights or option.flight_data.one_stop_flights or option.flight_data.multi_stop_flights) %}
+        <div class="no-flights">No flights found for this combination.</div>
+        {% endif %}
+      </div>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<!-- No global 'no results' message; handled by JS or per-combination only -->
+{% endif %} 
