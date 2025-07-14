@@ -508,6 +508,7 @@
         document.getElementById('results-content').innerHTML = html;
         document.getElementById('results-content').style.display = '';
         colorPricesByRatio();
+        window.allFlightDataReady = allReady;
         updateAIRecommendation(flightOptions);
         // Update the count and spinner
         const count = options.length;
@@ -521,11 +522,10 @@
       const recText = document.getElementById('ai-recommendation-text');
       const aiBox = document.getElementById('ai-recommendations');
       const prev = recText.innerHTML;
+      // Calculate cheapest options
       let best = null, bestType = '', bestPrice = 9999999, bestOption = null, bestFlight = null;
       let cheapestDirect = null, cheapestOneStop = null, cheapestMultiStop = null;
       let cheapestDirectOpt = null, cheapestOneStopOpt = null, cheapestMultiStopOpt = null;
-
-      // Collect all prices for ratio coloring
       let allPrices = [];
       options.forEach(option => {
         if (!option.flight_data) return;
@@ -539,25 +539,8 @@
         });
       });
       allPrices = allPrices.filter(v => v > 0).sort((a, b) => a - b);
-
-      function getPriceColor(price) {
-        if (!price || allPrices.length === 0) return '#28a745';
-        const idx = allPrices.indexOf(price);
-        const pct = idx / (allPrices.length - 1 || 1);
-        if (pct <= 0.2) {
-          const t = pct / 0.2;
-          return lerpColor('#43b943', '#28a745', t);
-        } else if (pct >= 0.8) {
-          const t = (pct - 0.8) / 0.2;
-          return lerpColor('#dc3545', '#7a1a1a', t);
-        } else {
-          return '#ff9800';
-        }
-      }
-
       options.forEach(option => {
         if (!option.flight_data) return;
-        // Direct
         if (option.flight_data.direct_flights && option.flight_data.direct_flights.length) {
           option.flight_data.direct_flights.forEach(flight => {
             let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
@@ -571,7 +554,6 @@
             }
           });
         }
-        // 1-Stop
         if (option.flight_data.one_stop_flights && option.flight_data.one_stop_flights.length) {
           option.flight_data.one_stop_flights.forEach(flight => {
             let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
@@ -585,7 +567,6 @@
             }
           });
         }
-        // 2+ Stops
         if (option.flight_data.multi_stop_flights && option.flight_data.multi_stop_flights.length) {
           option.flight_data.multi_stop_flights.forEach(flight => {
             let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
@@ -600,7 +581,21 @@
           });
         }
       });
-
+      // Build summary HTML for cheapest options
+      function getPriceColor(price) {
+        if (!price || allPrices.length === 0) return '#28a745';
+        const idx = allPrices.indexOf(price);
+        const pct = idx / (allPrices.length - 1 || 1);
+        if (pct <= 0.2) {
+          const t = pct / 0.2;
+          return lerpColor('#43b943', '#28a745', t);
+        } else if (pct >= 0.8) {
+          const t = (pct - 0.8) / 0.2;
+          return lerpColor('#dc3545', '#7a1a1a', t);
+        } else {
+          return '#ff9800';
+        }
+      }
       function formatRec(type, opt, flight) {
         if (!opt || !flight) return '';
         const originCode = opt.origin, destCode = opt.destination;
@@ -611,11 +606,10 @@
         const originFlag = countryCodeMap[originCode] ? `<img src=\"https://flagcdn.com/24x18/${countryCodeMap[originCode]}.png\" alt=\"${countryCodeMap[originCode]} flag\" style=\"vertical-align:middle;margin-left:0.3em;\">` : '';
         const destFlag = countryCodeMap[destCode] ? `<img src=\"https://flagcdn.com/24x18/${countryCodeMap[destCode]}.png\" alt=\"${countryCodeMap[destCode]} flag\" style=\"vertical-align:middle;margin-left:0.3em;\">` : '';
         const price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
-        const color = getPriceColor(price);
         const formattedPrice = price ? price.toLocaleString() : flight.price;
+        const color = getPriceColor(price);
         return `<div style=\"margin:0.5em 0;\"><span style=\"font-weight:600;\">${type}:</span> ${originName}${originFlag} → ${destName}${destFlag} for <span style=\"color:${color};font-weight:700;font-size:1.1em;\">$${formattedPrice}</span></div>`;
       }
-
       let html = '';
       if (bestOption && bestFlight) {
         html += `<div style=\"margin-bottom:0.7em;\"><span style=\"font-weight:700;text-decoration:underline;\">Best overall:</span> ${formatRec(bestType, bestOption, bestFlight)}</div>`;
@@ -629,10 +623,94 @@
       if (cheapestMultiStopOpt && cheapestMultiStop) {
         html += formatRec('Cheapest 2+ Stops', cheapestMultiStopOpt, cheapestMultiStop);
       }
-      if (!html) html = 'No recommendation yet. Waiting for flight data...';
+      // Show loading message
+      html += '<div style="margin-top:1em;">Analyzing flight options...</div>';
       recText.innerHTML = html;
+      // Only call Cohere after all options are loaded (allReady=true)
+      if (window.allFlightDataReady) {
+        fetch(`/ai_recommendation/${searchId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Remove any 'Analyzing flight options...' message robustly
+            let htmlNoLoading = html.replace(/<div[^>]*>\s*Analyzing flight options\.\.\.<\/div>/i, '');
+            if (data.success && data.recommendation) {
+              recText.innerHTML = htmlNoLoading + `<div style=\"margin-top:1em;font-size:1.05em;color:#333;text-align:center;\"><b>AI insight:</b> ${data.recommendation}</div>`;
+            } else {
+              recText.innerHTML = htmlNoLoading + '<div style="margin-top:1em;color:#dc3545;">AI insight unavailable: ' + (data.error || 'Unknown error') + '</div>';
+            }
+          })
+          .catch(err => {
+            let htmlNoLoading = html.replace(/<div[^>]*>\s*Analyzing flight options\.\.\.<\/div>/i, '');
+            recText.innerHTML = htmlNoLoading + '<div style="margin-top:1em;color:#dc3545;">AI insight error: ' + err + '</div>';
+          });
+      }
+      // Highlight if changed
+      if (recText.innerHTML !== prev) {
+        aiBox.classList.add('ai-flash');
+        setTimeout(() => aiBox.classList.remove('ai-flash'), 600);
+      }
+    }
 
-      // Add detailed AI-generated summary
+    // Local fallback for AI insight (existing logic)
+    function getLocalAIInsight(options) {
+      let best = null, bestType = '', bestPrice = 9999999, bestOption = null, bestFlight = null;
+      let cheapestDirect = null, cheapestOneStop = null, cheapestMultiStop = null;
+      let cheapestDirectOpt = null, cheapestOneStopOpt = null, cheapestMultiStopOpt = null;
+      let allPrices = [];
+      options.forEach(option => {
+        if (!option.flight_data) return;
+        ['direct_flights', 'one_stop_flights', 'multi_stop_flights'].forEach(type => {
+          if (option.flight_data[type] && option.flight_data[type].length) {
+            option.flight_data[type].forEach(flight => {
+              let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+              if (price) allPrices.push(price);
+            });
+          }
+        });
+      });
+      allPrices = allPrices.filter(v => v > 0).sort((a, b) => a - b);
+      options.forEach(option => {
+        if (!option.flight_data) return;
+        if (option.flight_data.direct_flights && option.flight_data.direct_flights.length) {
+          option.flight_data.direct_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestDirect || price < cheapestDirect.price)) {
+              cheapestDirect = flight;
+              cheapestDirect.price = price;
+              cheapestDirectOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = 'Direct'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+        if (option.flight_data.one_stop_flights && option.flight_data.one_stop_flights.length) {
+          option.flight_data.one_stop_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestOneStop || price < cheapestOneStop.price)) {
+              cheapestOneStop = flight;
+              cheapestOneStop.price = price;
+              cheapestOneStopOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = '1-Stop'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+        if (option.flight_data.multi_stop_flights && option.flight_data.multi_stop_flights.length) {
+          option.flight_data.multi_stop_flights.forEach(flight => {
+            let price = parseInt((flight.price || '').toString().replace(/\D/g, ''));
+            if (price && (!cheapestMultiStop || price < cheapestMultiStop.price)) {
+              cheapestMultiStop = flight;
+              cheapestMultiStop.price = price;
+              cheapestMultiStopOpt = option;
+            }
+            if (price && price < bestPrice) {
+              bestPrice = price; bestType = '2+ Stops'; bestOption = option; bestFlight = flight;
+            }
+          });
+        }
+      });
       let aiSummary = '';
       if (cheapestDirect && (cheapestOneStop || cheapestMultiStop)) {
         const directPrice = parseInt((cheapestDirect.price || '').toString().replace(/\D/g, ''));
@@ -662,14 +740,7 @@
       } else if (cheapestOneStop || cheapestMultiStop) {
         aiSummary = `No direct flights are available. Consider the best connecting option for your trip.`;
       }
-      if (aiSummary) {
-        recText.innerHTML += `<div style=\"margin-top:1em;font-size:1.05em;color:#333;text-align:center;\"><b>AI insight:</b> ${aiSummary}</div>`;
-      }
-      // Highlight if changed
-      if (recText.innerHTML !== prev) {
-        aiBox.classList.add('ai-flash');
-        setTimeout(() => aiBox.classList.remove('ai-flash'), 600);
-      }
+      return `<div style=\"margin-top:1em;font-size:1.05em;color:#333;text-align:center;\"><b>AI insight:</b> ${aiSummary}</div>`;
     }
 
     function colorPricesByRatio() {

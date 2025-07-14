@@ -7,6 +7,8 @@ import threading
 from threading import Lock
 from playwright.sync_api import sync_playwright
 import requests
+import logging
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -754,15 +756,19 @@ COHERE_API_KEY = "m0Xl6rgeczEonBWV9Oq8z8W3dHPDi4v5O6ecNG2Q"  # Or use os.environ
 
 @app.route('/ai_recommendation/<search_id>')
 def ai_recommendation(search_id):
+    logging.info(f"AI recommendation endpoint hit for search_id: {search_id}")
     with store_lock:
         options = flight_data_store.get(search_id)
         if not options:
+            logging.warning(f"Search ID {search_id} not found in flight_data_store.")
             return jsonify({'success': False, 'error': 'Search ID not found'})
         summary = summarize_options_for_ai(options)
         prompt = (
             f"Given these flight options:\n{summary}\n"
             "Write a helpful, detailed recommendation for the user, explaining the tradeoffs between direct and connecting flights, price differences, and which option might be best. "
-            "If a direct flight is only slightly more expensive, mention the convenience. If a connecting flight is much cheaper, mention the savings. Be clear and user-focused."
+            "If a direct flight is only slightly more expensive, mention the convenience. If a connecting flight is much cheaper, mention the savings. Be clear and user-focused. "
+            "Do NOT mention locations of stops, baggage, baggage allowances, average flight duration, or the airlines you'd be traveling with. "
+            "Keep your reply under 100 words. Be even more concise."
         )
         headers = {
             "Authorization": f"Bearer {COHERE_API_KEY}",
@@ -774,23 +780,46 @@ def ai_recommendation(search_id):
             "max_tokens": 200,
             "temperature": 0.7
         }
-        response = requests.post("https://api.cohere.ai/v1/generate", headers=headers, json=data)
-        if response.status_code == 200:
-            ai_text = response.json()["generations"][0]["text"]
-            return jsonify({'success': True, 'recommendation': ai_text})
-        else:
-            return jsonify({'success': False, 'error': response.text})
+        try:
+            logging.info(f"Calling Cohere API with prompt: {prompt}")
+            response = requests.post("https://api.cohere.ai/v1/generate", headers=headers, json=data)
+            logging.info(f"Cohere API response status: {response.status_code}")
+            logging.info(f"Cohere API response body: {response.text}")
+            if response.status_code == 200:
+                ai_text = response.json()["generations"][0]["text"]
+                return jsonify({'success': True, 'recommendation': ai_text})
+            else:
+                logging.error(f"Cohere API call failed with status: {response.status_code}, response: {response.text}")
+                return jsonify({'success': False, 'error': response.text})
+        except Exception as e:
+            logging.exception(f"Exception during Cohere API call: {e}")
+            return jsonify({'success': False, 'error': str(e)})
 
 def summarize_options_for_ai(options):
-    # Create a concise summary string for the AI
-    lines = []
+    # Only include the cheapest flight of each type for each origin-destination pair, using full city names
+    summary_lines = []
     for opt in options:
-        if not opt.get('flight_data'): continue
-        for typ, label in [('direct_flights', 'Direct'), ('one_stop_flights', '1-Stop'), ('multi_stop_flights', '2+ Stops')]:
-            for flight in opt['flight_data'].get(typ, []):
-                price = flight.get('price')
-                lines.append(f"{label} flight: {price}")
-    return '\\n'.join(lines)
+        if not opt.get('flight_data'):
+            continue
+        origin_code = opt.get('origin')
+        destination_code = opt.get('destination')
+        origin = AIRPORTS.get(origin_code, origin_code)
+        destination = AIRPORTS.get(destination_code, destination_code)
+        for typ, label in [
+            ('direct_flights', 'Direct'),
+            ('one_stop_flights', '1-Stop'),
+            ('multi_stop_flights', '2+ Stops')
+        ]:
+            flights = opt['flight_data'].get(typ, [])
+            if flights:
+                # Find the cheapest flight for this type
+                cheapest = min(
+                    flights,
+                    key=lambda f: int(''.join(filter(str.isdigit, str(f.get('price', '0'))))) if f.get('price') else float('inf')
+                )
+                price = cheapest.get('price')
+                summary_lines.append(f"{label} flight {origin} → {destination}: {price}")
+    return '\n'.join(summary_lines)
 
 
 if __name__ == '__main__':
