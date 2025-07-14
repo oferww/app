@@ -1,2 +1,2 @@
-release: playwright install
+release: playwright install-deps && playwright install
 web: gunicorn app:app
