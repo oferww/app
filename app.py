@@ -764,10 +764,12 @@ def ai_recommendation(search_id):
             return jsonify({'success': False, 'error': 'Search ID not found'})
         summary = summarize_options_for_ai(options)
         prompt = (
-            f"Given these flight options:\n{summary}\n"
+            f"The data below gives only the cheapest price for each type, and for the rest, the price difference from the cheapest.\n{summary}\n"
             "Write a helpful, detailed recommendation for the user, explaining the tradeoffs between direct and connecting flights, price differences, and which option might be best. "
             "If a direct flight is only slightly more expensive, mention the convenience. If a connecting flight is much cheaper, mention the savings. Be clear and user-focused. "
+            "Include percentages of savings, difference in prices, and tradeoffs of convenience and price. "
             "Do NOT mention locations of stops, baggage, baggage allowances, average flight duration, or the airlines you'd be traveling with. "
+            "Do NOT end your reply with a question. Only provide an insight based on the info above. "
             "Keep your reply under 100 words. Be even more concise."
         )
         headers = {
@@ -796,29 +798,47 @@ def ai_recommendation(search_id):
             return jsonify({'success': False, 'error': str(e)})
 
 def summarize_options_for_ai(options):
-    # Only include the cheapest flight of each type for each origin-destination pair, using full city names
-    summary_lines = []
+    # Send only the cheapest price for each type, and for the rest, the difference from the cheapest
+    best = {'direct': float('inf'), 'one_stop': float('inf'), 'multi_stop': float('inf')}
+    best_opt = {}
     for opt in options:
         if not opt.get('flight_data'):
             continue
         origin_code = opt.get('origin')
         destination_code = opt.get('destination')
-        origin = AIRPORTS.get(origin_code, origin_code)
-        destination = AIRPORTS.get(destination_code, destination_code)
-        for typ, label in [
-            ('direct_flights', 'Direct'),
-            ('one_stop_flights', '1-Stop'),
-            ('multi_stop_flights', '2+ Stops')
-        ]:
-            flights = opt['flight_data'].get(typ, [])
-            if flights:
-                # Find the cheapest flight for this type
-                cheapest = min(
-                    flights,
-                    key=lambda f: int(''.join(filter(str.isdigit, str(f.get('price', '0'))))) if f.get('price') else float('inf')
-                )
-                price = cheapest.get('price')
-                summary_lines.append(f"{label} flight {origin} → {destination}: {price}")
+        origin_val = AIRPORTS.get(origin_code)
+        origin = origin_val.split(' (')[0] if origin_val else origin_code
+        destination_val = AIRPORTS.get(destination_code)
+        destination = destination_val.split(' (')[0] if destination_val else destination_code
+        # Direct
+        for flight in opt['flight_data'].get('direct_flights', []):
+            price = int(''.join(filter(str.isdigit, str(flight.get('price', '0'))))) if flight.get('price') else float('inf')
+            if price < best['direct']:
+                best['direct'] = price
+                best_opt['direct'] = (origin, destination, price)
+        # 1-Stop
+        for flight in opt['flight_data'].get('one_stop_flights', []):
+            price = int(''.join(filter(str.isdigit, str(flight.get('price', '0'))))) if flight.get('price') else float('inf')
+            if price < best['one_stop']:
+                best['one_stop'] = price
+                best_opt['one_stop'] = (origin, destination, price)
+        # 2+ Stops
+        for flight in opt['flight_data'].get('multi_stop_flights', []):
+            price = int(''.join(filter(str.isdigit, str(flight.get('price', '0'))))) if flight.get('price') else float('inf')
+            if price < best['multi_stop']:
+                best['multi_stop'] = price
+                best_opt['multi_stop'] = (origin, destination, price)
+    summary_lines = []
+    # Find the absolute cheapest price
+    cheapest_type = min((k for k in best if best[k] < float('inf')), key=lambda k: best[k], default=None)
+    if cheapest_type:
+        cheapest_price = best[cheapest_type]
+        cheapest_label = {'direct': 'Direct', 'one_stop': '1-Stop', 'multi_stop': '2+ Stops'}[cheapest_type]
+        summary_lines.append(f"Cheapest: {cheapest_label} {best_opt[cheapest_type][0]} → {best_opt[cheapest_type][1]} for ${cheapest_price}")
+        for k, label in [('direct', 'Direct'), ('one_stop', '1-Stop'), ('multi_stop', '2+ Stops')]:
+            if k != cheapest_type and k in best_opt and best[k] < float('inf'):
+                diff = best[k] - cheapest_price
+                summary_lines.append(f"{label} is ${diff} more expensive")
     return '\n'.join(summary_lines)
 
 
